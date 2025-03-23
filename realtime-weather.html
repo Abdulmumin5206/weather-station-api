@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Real-Time Weather Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f0f2f5;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .chart-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    canvas {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>🌤️ Real-Time Weather Station Dashboard</h1>
+  <div class="chart-container">
+    <canvas id="tempChart" width="400" height="200"></canvas>
+    <canvas id="humidityChart" width="400" height="200"></canvas>
+    <canvas id="windChart" width="400" height="200"></canvas>
+    <canvas id="pressureChart" width="400" height="200"></canvas>
+  </div>
+
+  <script>
+    const apiUrl = 'https://weather-station-api-syyt.onrender.com/weather';
+
+    const createChart = (ctx, label, color) => new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label,
+          data: [],
+          borderColor: color,
+          backgroundColor: color + '33', // semi-transparent
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            title: { display: true, text: 'Time' }
+          },
+          y: {
+            beginAtZero: false
+          }
+        }
+      }
+    });
+
+    const tempCtx = document.getElementById('tempChart').getContext('2d');
+    const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+    const windCtx = document.getElementById('windChart').getContext('2d');
+    const pressureCtx = document.getElementById('pressureChart').getContext('2d');
+
+    const tempChart = createChart(tempCtx, 'Temperature (°C)', 'rgba(255, 99, 132, 1)');
+    const humidityChart = createChart(humidityCtx, 'Humidity (%)', 'rgba(54, 162, 235, 1)');
+    const windChart = createChart(windCtx, 'Wind Speed (km/h)', 'rgba(255, 206, 86, 1)');
+    const pressureChart = createChart(pressureCtx, 'Pressure (hPa)', 'rgba(75, 192, 192, 1)');
+
+    async function fetchWeather() {
+      try {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        const time = new Date(data.timestamp).toLocaleTimeString();
+
+        const updateChart = (chart, value) => {
+          chart.data.labels.push(time);
+          chart.data.datasets[0].data.push(value);
+          if (chart.data.labels.length > 10) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+          }
+          chart.update();
+        };
+
+        updateChart(tempChart, data.temperature_celsius);
+        updateChart(humidityChart, data.humidity_percent);
+        updateChart(windChart, data.wind_speed_kmh);
+        updateChart(pressureChart, data.pressure_hPa);
+
+      } catch (error) {
+        console.error('Error fetching weather data:', error);
+      }
+    }
+
+    fetchWeather();
+    setInterval(fetchWeather, 5000);
+  </script>
+</body>
+</html>
