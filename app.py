@@ -24,8 +24,7 @@ def generate_data():
         print("✅ Data generated:", latest_data)
         time.sleep(10)
 
-@app.before_serving
-def start_sensor_thread():
+def ensure_sensor_running():
     global sensor_started
     if not sensor_started:
         print("🚀 Starting sensor thread...")
@@ -35,9 +34,10 @@ def start_sensor_thread():
 
 @app.route('/weather')
 def get_weather():
+    ensure_sensor_running()  # Trigger sensor if not already running
     if not latest_data:
         return jsonify({"message": "Sensor is starting..."}), 503
     return jsonify(latest_data)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
