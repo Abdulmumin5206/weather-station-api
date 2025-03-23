@@ -24,7 +24,7 @@ def generate_data():
         print("✅ Data generated:", latest_data)
         time.sleep(10)
 
-@app.before_first_request
+@app.before_serving
 def start_sensor_thread():
     global sensor_started
     if not sensor_started:
