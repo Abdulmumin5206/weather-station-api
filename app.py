@@ -9,8 +9,8 @@ app = Flask(__name__)
 CORS(app)
 
 latest_data = {}
+sensor_started = False
 
-# Sensor loop
 def generate_data():
     global latest_data
     while True:
@@ -24,16 +24,20 @@ def generate_data():
         print("✅ Data generated:", latest_data)
         time.sleep(10)
 
-# Safe trigger for gunicorn/Render
 @app.before_first_request
-def activate_background_thread():
-    thread = threading.Thread(target=generate_data)
-    thread.daemon = True
-    thread.start()
-    print("🚀 Sensor thread started.")
+def start_sensor_thread():
+    global sensor_started
+    if not sensor_started:
+        print("🚀 Starting sensor thread...")
+        sensor_thread = threading.Thread(target=generate_data, daemon=True)
+        sensor_thread.start()
+        sensor_started = True
 
 @app.route('/weather')
 def get_weather():
     if not latest_data:
         return jsonify({"message": "Sensor is starting..."}), 503
     return jsonify(latest_data)
+
+if __name__ == "__main__":
+    app.run(debug=True)
