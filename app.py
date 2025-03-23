@@ -10,6 +10,7 @@ CORS(app)
 
 latest_data = {}
 
+# Sensor loop
 def generate_data():
     global latest_data
     while True:
@@ -23,15 +24,16 @@ def generate_data():
         print("✅ Data generated:", latest_data)
         time.sleep(10)
 
-@app.route('/weather', methods=['GET'])
+# Safe trigger for gunicorn/Render
+@app.before_first_request
+def activate_background_thread():
+    thread = threading.Thread(target=generate_data)
+    thread.daemon = True
+    thread.start()
+    print("🚀 Sensor thread started.")
+
+@app.route('/weather')
 def get_weather():
     if not latest_data:
         return jsonify({"message": "Sensor is starting..."}), 503
     return jsonify(latest_data)
-
-# ✅ THIS is the key: start thread when app is imported (Render will call it via gunicorn)
-def start_background_thread():
-    thread = threading.Thread(target=generate_data, daemon=True)
-    thread.start()
-
-start_background_thread()  # <--- start loop as soon as app loads
