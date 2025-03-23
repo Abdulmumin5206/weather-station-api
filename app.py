@@ -1,22 +1,22 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-import random
-from datetime import datetime
 import threading
+import random
 import time
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
-# Global variable to hold the latest weather data
-latest_weather_data = {}
+# Shared variable to hold latest sensor data
+latest_data = {}
 
-# Function to simulate a sensor generating data every 10 seconds
-def sensor_loop():
-    global latest_weather_data
+# Background task: simulate sensor data every 10 seconds
+def sensor_data_generator():
+    global latest_data
 
     while True:
-        new_data = {
+        latest_data = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "temperature_celsius": round(random.uniform(15, 25), 2),
             "humidity_percent": round(random.uniform(40, 80), 2),
@@ -24,22 +24,19 @@ def sensor_loop():
             "wind_speed_kmh": round(random.uniform(0, 50), 2)
         }
 
-        latest_weather_data = new_data
-        print("🔁 New weather data generated:", new_data)
+        print("✅ Sensor data updated:", latest_data)
+        time.sleep(10)  # Wait 10 seconds before next reading
 
-        time.sleep(10)  # Generate new data every 10 seconds
-
-# API endpoint to return the latest data
+# Route to return the latest weather data
 @app.route('/weather', methods=['GET'])
-def weather():
-    if not latest_weather_data:
-        return jsonify({"message": "Sensor is starting, please wait..."}), 503
-    return jsonify(latest_weather_data)
+def get_weather():
+    if not latest_data:
+        return jsonify({"message": "Sensor not ready yet."}), 503
+    return jsonify(latest_data)
 
 if __name__ == '__main__':
-    # Start the sensor loop in the background
-    sensor_thread = threading.Thread(target=sensor_loop, daemon=True)
-    sensor_thread.start()
+    # Start sensor in a background thread
+    threading.Thread(target=sensor_data_generator, daemon=True).start()
 
     # Start Flask app
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host='0.0.0.0', port=5000)
