@@ -16,14 +16,14 @@ def get_weather():
 def receive_weather():
     global latest_data
     try:
-        # ✅ force=True allows Flask to parse even without perfect headers
-        latest_data = request.get_json(force=True)
-        if not latest_data:
-            raise Exception("JSON body is empty")
+        data = request.get_json(force=True)
+        if not data:
+            raise ValueError("Empty JSON payload")
 
-        print("📥 Data received from ESP8266:", latest_data)
+        print("📥 Received data:", data)
+        latest_data = data
         return jsonify({"message": "Data stored"}), 200
 
     except Exception as e:
-        print("❌ Error receiving data:", e)
+        print("❌ Error parsing POST data:", e)
         return jsonify({"error": str(e)}), 400
