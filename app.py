@@ -17,8 +17,10 @@ def receive_weather():
     global latest_data
     try:
         latest_data = request.get_json(force=True)
-        print("📥 Received from ESP:", latest_data)
-        return jsonify({"message": "Data received"}), 200
+        if not latest_data:
+            raise Exception("No JSON received")
+        print("📥 Data received:", latest_data)
+        return jsonify({"message": "Data stored"}), 200
     except Exception as e:
-        print("❌ Error parsing JSON:", e)
+        print("❌ Error receiving data:", e)
         return jsonify({"error": str(e)}), 400
