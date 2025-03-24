@@ -1,7 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import threading
-import time
 
 app = Flask(__name__)
 CORS(app)
@@ -17,8 +15,10 @@ def get_weather():
 @app.route('/weather', methods=['POST'])
 def receive_weather():
     global latest_data
-    latest_data = request.get_json()
-    print("📥 Received from ESP:", latest_data)
-    return jsonify({"message": "Data received"}), 200
-
-# Start Flask with Render’s gunicorn automatically — no loop needed
+    try:
+        latest_data = request.get_json(force=True)
+        print("📥 Received from ESP:", latest_data)
+        return jsonify({"message": "Data received"}), 200
+    except Exception as e:
+        print("❌ Error parsing JSON:", e)
+        return jsonify({"error": str(e)}), 400
