@@ -19,11 +19,9 @@ def receive_weather():
         data = request.get_json(force=True)
         if not data:
             raise ValueError("Empty JSON payload")
-
         print("📥 Received data:", data)
         latest_data = data
         return jsonify({"message": "Data stored"}), 200
-
     except Exception as e:
         print("❌ Error parsing POST data:", e)
         return jsonify({"error": str(e)}), 400
